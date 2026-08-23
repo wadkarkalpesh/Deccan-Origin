@@ -1,29 +1,38 @@
 # =====================================================================
-# Deccan Origin Production Backend Containerfile
-# Multi-stage lightweight Node.js 20 Alpine distribution
+# Deccan Origin Production Python Backend Containerfile
+# Multi-stage lightweight Python 3.10-slim distribution
 # =====================================================================
 
-FROM node:20-alpine AS dependencies
+FROM python:3.10-slim AS builder
 WORKDIR /app
-COPY package*.json ./
-RUN npm ci --omit=dev
 
-FROM node:20-alpine AS runner
+# Install build dependencies if any needed
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY requirements.txt .
+RUN pip install --no-cache-dir --user -r requirements.txt
+
+FROM python:3.10-slim AS runner
 WORKDIR /app
-ENV NODE_ENV=production
-ENV PORT=5000
 
-# Security: Run as non-root user
-USER node
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONUNBUFFERED=1
+ENV PORT=8000
 
-# Copy production artifacts
-COPY --from=dependencies /app/node_modules ./node_modules
-COPY --chown=node:node . .
+# Copy installed dependencies from builder
+COPY --from=builder /root/.local /root/.local
+ENV PATH=/root/.local/bin:$PATH
 
-EXPOSE 5000
+# Copy backend codebase
+COPY . .
 
-# Automated Container Health Check
+EXPOSE 8000
+
+# Automated Container Health Check using python client
 HEALTHCHECK --interval=30s --timeout=5s --start-period=5s --retries=3 \
-  CMD wget --no-verbose --tries=1 --spider http://localhost:5000/v1/health || exit 1
+  CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:8000/v1/health')" || exit 1
 
-CMD ["node", "server.js"]
+# Run Uvicorn production server
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]

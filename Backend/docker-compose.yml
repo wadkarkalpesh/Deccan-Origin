@@ -8,10 +8,10 @@ services:
     container_name: deccanorigin-api-server
     restart: unless-stopped
     ports:
-      - "5000:5000"
+      - "8000:8000"
     environment:
-      - NODE_ENV=production
-      - PORT=5000
+      - ENVIRONMENT=production
+      - PORT=8000
       - POSTGRES_URL=postgresql://deccanorigin:secure_eco_pass_2026@postgres:5432/deccanorigin_db
       - REDIS_URL=redis://redis:6379
       - JWT_SECRET=eco_swadesh_production_jwt_secret_2026_secure

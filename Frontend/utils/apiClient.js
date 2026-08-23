@@ -7,6 +7,7 @@
  * - Strict Mapping to constants/apiContracts.js and IEEE 830 Specs
  */
 
+import { Platform } from 'react-native';
 import {
   MOCK_PRODUCTS,
   MOCK_SHIPMENTS,
@@ -22,10 +23,23 @@ import {
   STORAGE_KEYS,
 } from './storage.js';
 
-// Configurable API Base URL
-export const API_BASE_URL =
-  (typeof process !== 'undefined' && process.env && process.env.EXPO_PUBLIC_API_URL) ||
-  'http://localhost:5000/v1';
+// Configurable API Base URL - Smart detection for Android emulators (10.0.2.2)
+const getDefaultApiUrl = () => {
+  if (typeof process !== 'undefined' && process.env && process.env.EXPO_PUBLIC_API_URL) {
+    return process.env.EXPO_PUBLIC_API_URL;
+  }
+  try {
+    if (Platform.OS === 'android') {
+      return 'http://10.0.2.2:8000/v1';
+    }
+  } catch (e) {
+    // Fallback if Platform is not defined (e.g. static web test context)
+  }
+  return 'http://localhost:8000/v1';
+};
+
+export const API_BASE_URL = getDefaultApiUrl();
+
 
 let cachedToken = null;
 
