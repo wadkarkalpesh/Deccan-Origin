@@ -10,6 +10,7 @@ import {
 import apiClient from '../utils/apiClient';
 import { supabase, isSupabaseConfigured } from '../utils/supabaseClient';
 import supabaseService from '../services/supabaseService';
+import showAlert from '../utils/alertHelper';
 import {
   saveStorageData,
   getStorageData,
@@ -529,6 +530,7 @@ export function AppProvider({ children }) {
         supabase,
         supabaseService,
         isSupabaseConfigured,
+        showAlert,
         refreshAllData: fetchAllLiveData,
       }}
     >

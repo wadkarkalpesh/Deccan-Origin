@@ -8,6 +8,7 @@
  */
 
 import { Platform } from 'react-native';
+import Constants from 'expo-constants';
 import {
   MOCK_PRODUCTS,
   MOCK_SHIPMENTS,
@@ -23,19 +24,31 @@ import {
   STORAGE_KEYS,
 } from './storage.js';
 
-// Configurable API Base URL - Smart detection for Android emulators (10.0.2.2)
+// Configurable API Base URL - Smart detection for Physical Mobile Devices (LAN IP), Android Emulators, and Web
 const getDefaultApiUrl = () => {
   if (typeof process !== 'undefined' && process.env && process.env.EXPO_PUBLIC_API_URL) {
     return process.env.EXPO_PUBLIC_API_URL;
   }
   try {
-    if (Platform.OS === 'android') {
-      return 'http://10.0.2.2:8000/v1';
+    const hostUri =
+      Constants?.expoConfig?.hostUri ||
+      Constants?.manifest2?.extra?.expoClient?.hostUri ||
+      Constants?.manifest?.debuggerHost;
+    if (hostUri) {
+      const ip = hostUri.split(':')[0];
+      if (ip && ip !== 'localhost' && ip !== '127.0.0.1') {
+        return `http://${ip}:5000/v1`;
+      }
     }
-  } catch (e) {
-    // Fallback if Platform is not defined (e.g. static web test context)
-  }
-  return 'http://localhost:8000/v1';
+  } catch (_e) {}
+
+  try {
+    if (Platform.OS === 'android') {
+      return 'http://10.0.2.2:5000/v1';
+    }
+  } catch (e) {}
+
+  return 'http://localhost:5000/v1';
 };
 
 export const API_BASE_URL = getDefaultApiUrl();
@@ -62,10 +75,43 @@ export const getAuthToken = () => {
   return cachedToken;
 };
 
+// Track backend reachable status with intelligent caching for zero-delay UI execution
+let backendStatus = {
+  isOffline: false,
+  lastChecked: 0,
+  offlineCacheDurationMs: 15000, // 15 seconds
+};
+
+export const checkBackendHealth = async () => {
+  try {
+    const controller = typeof AbortController !== 'undefined' ? new AbortController() : null;
+    const timeoutId = controller ? setTimeout(() => controller.abort(), 1200) : null;
+    const res = await fetch(`${API_BASE_URL}/health`, {
+      signal: controller ? controller.signal : undefined,
+    });
+    if (timeoutId) clearTimeout(timeoutId);
+    if (res.ok) {
+      backendStatus.isOffline = false;
+      backendStatus.lastChecked = Date.now();
+      return true;
+    }
+  } catch (_e) {
+    backendStatus.isOffline = true;
+    backendStatus.lastChecked = Date.now();
+  }
+  return false;
+};
+
 /**
- * Universal Fetch Wrapper with Token Injection & Fallback Support
+ * Universal Fetch Wrapper with Token Injection & Zero-Delay Fallback Support
  */
 async function request(endpoint, options = {}, fallbackData = null) {
+  const now = Date.now();
+  // If backend was recently detected as unreachable and we have fallback data, return fallback instantly (0 delay)
+  if (backendStatus.isOffline && (now - backendStatus.lastChecked < backendStatus.offlineCacheDurationMs) && fallbackData !== null) {
+    return typeof fallbackData === 'function' ? fallbackData() : fallbackData;
+  }
+
   const url = `${API_BASE_URL}${endpoint}`;
   const token = getAuthToken();
 
@@ -80,7 +126,7 @@ async function request(endpoint, options = {}, fallbackData = null) {
 
   try {
     const controller = typeof AbortController !== 'undefined' ? new AbortController() : null;
-    const timeoutId = controller ? setTimeout(() => controller.abort(), 6000) : null;
+    const timeoutId = controller ? setTimeout(() => controller.abort(), 1200) : null;
 
     const response = await fetch(url, {
       ...options,
@@ -95,9 +141,12 @@ async function request(endpoint, options = {}, fallbackData = null) {
       throw new Error(errorJson.message || `API Error: HTTP ${response.status}`);
     }
 
+    backendStatus.isOffline = false;
+    backendStatus.lastChecked = Date.now();
     return await response.json();
   } catch (error) {
-    console.warn(`[DeccanOrigin API Client Warning] ${options.method || 'GET'} ${endpoint} failed: ${error.message}. Returning fallback.`);
+    backendStatus.isOffline = true;
+    backendStatus.lastChecked = Date.now();
     if (fallbackData !== null) {
       return typeof fallbackData === 'function' ? fallbackData() : fallbackData;
     }

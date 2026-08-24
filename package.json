@@ -16,7 +16,9 @@
     "test": "npm test --prefix Backend",
     "test:all": "npm run test:all --prefix Backend",
     "start:frontend": "npm start --prefix Frontend",
-    "start:backend": "npm start --prefix Backend"
+    "start:backend": "npm start --prefix Backend",
+    "expo": "npm start --prefix Frontend",
+    "expo:clear": "npx expo start -c --prefix Frontend"
   },
   "workspaces": [
     "Frontend",

@@ -4,6 +4,7 @@ import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider, initialWindowMetrics } from 'react-native-safe-area-context';
 import { AppProvider } from '../context/AppContext';
 import ErrorBoundary from '../components/ui/ErrorBoundary';
+import AlertModal from '../components/ui/AlertModal';
 import { COLORS } from '../constants/theme';
 
 const safePrimary = (COLORS && COLORS.primary) || '#1E4D2B';
@@ -16,7 +17,9 @@ export default function RootLayout() {
       <ErrorBoundary>
         <AppProvider>
           <StatusBar style="light" />
+          <AlertModal />
           <Stack
+            initialRouteName="(tabs)"
             screenOptions={{
               headerStyle: {
                 backgroundColor: safePrimary,
@@ -31,6 +34,12 @@ export default function RootLayout() {
               },
             }}
           >
+            <Stack.Screen
+              name="index"
+              options={{
+                headerShown: false,
+              }}
+            />
             <Stack.Screen
               name="(tabs)"
               options={{

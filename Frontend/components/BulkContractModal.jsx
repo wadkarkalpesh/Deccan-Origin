@@ -142,6 +142,9 @@ const styles = StyleSheet.create({
     borderRadius: safeRadiusXl,
     padding: safeSpacingMd,
     maxHeight: '85%',
+    maxWidth: 540,
+    width: '100%',
+    alignSelf: 'center',
   },
   modalHeader: {
     flexDirection: 'row',

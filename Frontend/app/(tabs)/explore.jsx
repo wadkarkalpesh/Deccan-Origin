@@ -71,7 +71,7 @@ export default function MarketplaceScreen() {
     const nameStr = (p.name || '').toLowerCase();
     const sellerStr = (p.sellerName || '').toLowerCase();
     const originStr = (p.origin || '').toLowerCase();
-    const query = searchQuery.toLowerCase();
+    const query = (searchQuery || '').toLowerCase();
 
     // Search Filter
     const matchesSearch =

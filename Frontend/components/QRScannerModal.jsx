@@ -165,6 +165,9 @@ const styles = StyleSheet.create({
     backgroundColor: safeCard,
     borderRadius: safeRadiusXl,
     padding: safeSpacingMd,
+    maxWidth: 540,
+    width: '100%',
+    alignSelf: 'center',
   },
   modalHeader: {
     flexDirection: 'row',

@@ -77,6 +77,10 @@ app.get('/', (req, res) => {
   });
 });
 
+app.get('/health', (req, res) => {
+  return res.redirect('/v1/health');
+});
+
 app.get('/v1/health', (req, res) => {
   return res.status(200).json({
     status: 'UP',
