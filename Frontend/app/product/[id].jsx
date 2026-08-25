@@ -18,6 +18,8 @@ import Button from '../../components/ui/Button';
 import BulkContractModal from '../../components/BulkContractModal';
 import NurseryBatchModal from '../../components/NurseryBatchModal';
 
+import { MOCK_PRODUCTS } from '../../constants/mockData';
+
 const safeBg = (COLORS && COLORS.background) || '#F4F7F4';
 const safePrimary = (COLORS && COLORS.primary) || '#1E4D2B';
 const safePrimaryDark = (COLORS && COLORS.primaryDark) || '#12361C';
@@ -40,15 +42,35 @@ export default function ProductDetailScreen() {
   const router = useRouter();
   const { products, addToCart, formatPrice, t } = useApp();
 
-  const product = products.find((p) => p.id === id) || products[0];
+  // Bulletproof product resolution with offline mock fallback
+  const product =
+    (products && products.find((p) => String(p.id) === String(id))) ||
+    (MOCK_PRODUCTS && MOCK_PRODUCTS.find((p) => String(p.id) === String(id))) ||
+    (products && products[0]) ||
+    (MOCK_PRODUCTS && MOCK_PRODUCTS[0]) ||
+    {};
 
-  const [buyMode, setBuyMode] = useState(product.category === 'bulkHarvest' ? 'BULK' : 'RETAIL');
-  const [qty, setQty] = useState(buyMode === 'BULK' ? (product.bulkMinTons || 2) : 1);
+  const isBulkCategory = product?.category === 'bulkHarvest';
+  const [buyMode, setBuyMode] = useState(isBulkCategory ? 'BULK' : 'RETAIL');
+  const [qty, setQty] = useState(buyMode === 'BULK' ? (product?.bulkMinTons || 2) : 1);
   const [showContract, setShowContract] = useState(false);
   const [showNurseryBatch, setShowNurseryBatch] = useState(false);
 
   const isBulk = buyMode === 'BULK';
-  const categoryTheme = CATEGORY_THEMES[product.category] || CATEGORY_THEMES.fertilizers;
+  const categoryTheme =
+    (product?.category && CATEGORY_THEMES && CATEGORY_THEMES[product.category]) ||
+    (CATEGORY_THEMES && CATEGORY_THEMES.fertilizers) ||
+    { name: 'Organic Product' };
+
+  if (!product || !product.id) {
+    return (
+      <View style={[styles.container, { justifyContent: 'center', alignItems: 'center', padding: 20 }]}>
+        <Text style={{ fontSize: 16, color: safeTextSecondary, marginBottom: 12 }}>Product information loading or unavailable offline.</Text>
+        <Button title="Back to Marketplace" variant="primary" onPress={() => router.push('/(tabs)')} />
+      </View>
+    );
+  }
+
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.scrollBody}>

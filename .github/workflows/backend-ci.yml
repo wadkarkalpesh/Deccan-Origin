@@ -2,9 +2,9 @@ name: Deccan Origin Backend CI/CD Pipeline
 
 on:
   push:
-    branches: [ main, staging, develop ]
+    branches: [ main, staging, develop, dev ]
   pull_request:
-    branches: [ main, staging ]
+    branches: [ main, staging, dev ]
 
 jobs:
   test-and-verify:
@@ -24,36 +24,41 @@ jobs:
         with:
           node-version: ${{ matrix.node-version }}
           cache: 'npm'
-          cache-dependency-path: server/package-lock.json
+          cache-dependency-path: Backend/package-lock.json
 
       - name: Install Backend Dependencies
-        working-directory: ./server
+        working-directory: ./Backend
         run: npm ci
 
       - name: Run Core Integration Test Suite
-        working-directory: ./server
+        working-directory: ./Backend
         run: node tests/api.test.js
 
       - name: Run Advanced Domain Test Suite
-        working-directory: ./server
+        working-directory: ./Backend
         run: node tests/advancedApi.test.js
 
       - name: Run Enterprise ERP & Webhook Test Suite
-        working-directory: ./server
+        working-directory: ./Backend
         run: node tests/enterpriseProcesses.test.js
 
       - name: Run GIS & Actuator Test Suite (Phases 15-20)
-        working-directory: ./server
+        working-directory: ./Backend
         run: node tests/phase15to20.test.js
 
       - name: Run Lab Custody & Sustainability Test Suite (Phases 21-25)
-        working-directory: ./server
+        working-directory: ./Backend
         run: node tests/phase21to25.test.js
 
       - name: Run Next Phase Rate Limiter & SRE Metrics Test Suite
-        working-directory: ./server
+        working-directory: ./Backend
         run: node tests/nextPhase.test.js
 
+      - name: Run Full-Stack Integration Suite
+        working-directory: ./Backend
+        run: node tests/fullStackIntegration.test.js
+
       - name: Security & Audit Check
-        working-directory: ./server
+        working-directory: ./Backend
         run: npm audit --audit-level=high || true
+

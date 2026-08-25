@@ -18,6 +18,8 @@
     "start:frontend": "npm start --prefix Frontend",
     "start:backend": "npm start --prefix Backend",
     "expo": "npm start --prefix Frontend",
+    "expo:go": "npx expo start -c --prefix Frontend",
+    "expo:tunnel": "npx expo start --tunnel --prefix Frontend",
     "expo:clear": "npx expo start -c --prefix Frontend"
   },
   "workspaces": [
