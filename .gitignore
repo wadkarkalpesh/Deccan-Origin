@@ -46,3 +46,6 @@ app-example
 /ios
 /android
 
+
+# October desktop — local canvas state
+.october/
